@@ -60,6 +60,12 @@ class AccountInvoice(models.Model):
             total = 0.0
             total_currency = 0.0
             currencies = set()
+            
+            
+            if move.move_type == 'entry' or move.is_outbound():
+                sign = 1
+            else:
+                sign = -1
 
             for line in move.line_ids:
                 if line.currency_id:
@@ -70,8 +76,8 @@ class AccountInvoice(models.Model):
 
                     if not line.exclude_from_invoice_tab:
                         # Untaxed amount.
-                        total_untaxed += line.balance
-                        total_untaxed_currency += line.amount_currency
+                        total_untaxed += sign *(line.quantity * line.price_unit) # line.balance
+                        total_untaxed_currency += sign *(line.quantity * line.price_unit) # line.amount_currency
                         total += line.balance
                         total_currency += line.amount_currency
                     elif line.tax_line_id:
@@ -88,13 +94,9 @@ class AccountInvoice(models.Model):
                 else:
                     # === Miscellaneous journal entry ===
                     if line.debit:
-                        total += line.balance
-                        total_currency += line.amount_currency
+                        total += sign *(line.quantity * line.price_unit) # line.balance
+                        total_currency += sign *(line.quantity * line.price_unit) # line.amount_currency
 
-            if move.move_type == 'entry' or move.is_outbound():
-                sign = 1
-            else:
-                sign = -1
             if move.discount_type == 'percent':
                 move.amount_discount = sum((line.quantity * line.price_unit * line.discount) / 100 for line in move.invoice_line_ids)
             else:
