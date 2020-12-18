@@ -35,25 +35,25 @@ class SaleOrder(models.Model):
         for order in self:
             amount_untaxed = amount_tax = amount_discount = 0.0
             for line in order.order_line:
-                amount_untaxed += line.price_subtotal
+                amount_untaxed += line.product_uom_qty * line.price_unit
                 amount_tax += line.price_tax
                 amount_discount += (line.product_uom_qty * line.price_unit * line.discount) / 100
             order.update({
                 'amount_untaxed': amount_untaxed,
                 'amount_tax': amount_tax,
                 'amount_discount': amount_discount,
-                'amount_total': amount_untaxed + amount_tax,
+                'amount_total': amount_untaxed - amount_discount + amount_tax,
             })
 
     discount_type = fields.Selection([('percent', 'Percentuale'), ('amount', 'Importo')], string='Tipologia',
                                      readonly=True,
                                      states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
-                                     default='percent')
+                                     default='')
     discount_rate = fields.Float('Sconto', digits=dp.get_precision('Account'),
                                  readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
-    amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, readonly=True, compute='_amount_all',
+    amount_untaxed = fields.Monetary(string='Imponibile', store=True, readonly=True, compute='_amount_all',
                                      track_visibility='always')
-    amount_tax = fields.Monetary(string='Taxes', store=True, readonly=True, compute='_amount_all',
+    amount_tax = fields.Monetary(string='Tasse', store=True, readonly=True, compute='_amount_all',
                                  track_visibility='always')
     amount_total = fields.Monetary(string='Totale', store=True, readonly=True, compute='_amount_all',
                                    track_visibility='always')
@@ -67,7 +67,7 @@ class SaleOrder(models.Model):
             if order.discount_type == 'percent':
                 for line in order.order_line:
                     line.discount = order.discount_rate
-            else:
+            elif order.discount_type == 'amount':
                 total = discount = 0.0
                 for line in order.order_line:
                     total += round((line.product_uom_qty * line.price_unit))
