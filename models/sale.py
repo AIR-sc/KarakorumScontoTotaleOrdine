@@ -95,4 +95,4 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
-    discount = fields.Float(string='Discount (%)', digits=(16, 20), default=0.0)
+    discount = fields.Float(string='Discount (%)', digits=(16, 2), default=0.0)
