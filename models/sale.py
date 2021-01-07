@@ -45,7 +45,7 @@ class SaleOrder(models.Model):
                 'amount_total': amount_untaxed - amount_discount + amount_tax,
             })
 
-    discount_type = fields.Selection([('percent', 'Percentuale'), ('amount', 'Importo')], string='Tipologia',
+    discount_type = fields.Selection([('percent', 'Percentuale')], string='Tipologia',
                                      readonly=True,
                                      states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
                                      default='')
